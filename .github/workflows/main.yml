@@ -9,14 +9,23 @@ jobs:
   android-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
-      - run: flutter pub get
-      - run: flutter build apk --split-per-abi
-  if: success() && always()
-      - uses: actions/upload-artifact@v3.1.3
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Android APKs
+        run: flutter build apk --split-per-abi
+
+      - name: Upload Android APKs
+        if: success() && always()
+        uses: actions/upload-artifact@v3
         with:
           name: android-apks
           path: build/app/outputs/flutter-apk/*.apk
@@ -24,14 +33,23 @@ jobs:
   web-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
-      - run: flutter pub get
-      - run: flutter build web --release
-  if: success() && always()
-      - uses: actions/upload-artifact@v3.1.3
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Upload Web build
+        if: success() && always()
+        uses: actions/upload-artifact@v3
         with:
           name: web-build
           path: build/web/
@@ -39,15 +57,26 @@ jobs:
   windows-build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
-      - run: flutter pub get
-      - run: flutter config --enable-windows-desktop
-      - run: flutter build windows --release
-  if: success() && always()
-      - uses: actions/upload-artifact@v3.1.3
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows .exe
+        run: flutter build windows --release
+
+      - name: Upload Windows build
+        if: success() && always()
+        uses: actions/upload-artifact@v3
         with:
           name: windows-build
           path: build/windows/runner/Release/

@@ -2,8 +2,7 @@ name: Flutter Multi-Platform Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -15,11 +14,11 @@ jobs:
         with:
           flutter-version: 'stable'
       - run: flutter pub get
-      - run: flutter build apk --target-platform android-arm
+      - run: flutter build apk --split-per-abi
       - uses: actions/upload-artifact@v3
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          name: android-apks
+          path: build/app/outputs/flutter-apk/*.apk
 
   web-build:
     runs-on: ubuntu-latest

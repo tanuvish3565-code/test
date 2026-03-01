@@ -41,19 +41,14 @@ jobs:
   windows-build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4 # Updated to v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          # Replace '3.x.x' with your actual local Flutter version (e.g., 3.27.0)
+          flutter-version: '3.x.x' 
+          channel: 'stable'
+          cache: true
       - run: flutter pub get
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows --release
-      - name: Check Windows build folder
-        run: if exist build\windows\runner\Release (echo Upload folder exists)
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v4 # Updated to v4
-        if: success()
-        with:
-          name: windows-build
-          path: build/windows/runner/Release/
-          retention-days: 5

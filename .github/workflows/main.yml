@@ -1,17 +1,21 @@
-name: Windows x64 Build Only
+name: Windows x64 Release Build
 
+# This ensures the build starts on every push to main, 
+# but also gives you the "Run workflow" button on your phone.
 on:
-  workflow_dispatch: # Allows you to trigger this from your Android phone
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-windows-x64:
-    # Using the latest 2026 runner for maximum speed
-    runs-on: windows-2025-vs2026 
+  build-windows:
+    # Using the latest March 2026 Windows runner with VS 2026
+    runs-on: windows-2025-vs2026
     
     defaults:
       run:
-        working-directory: my_app
-        
+        working-directory: my_app # Tells GitHub your code is in the subfolder
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,25 +24,26 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true
-          # Note: No '3.x.x', just use '3.x' or 'any' to get the 2026 version
           flutter-version: '3.x'
+          cache: true
 
-      - name: Get Dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Enable Windows Desktop
+      - name: Enable Windows Support
         run: flutter config --enable-windows-desktop
 
-      - name: Build Windows x64
-        # We explicitly target x64 to avoid confusion with ARM64
+      - name: Build x64 Executable
+        # Building specifically for x64 to match your request
         run: flutter build windows --release
 
-      - name: Upload Windows x64 Artifact
+      - name: Upload Windows App
         uses: actions/upload-artifact@v4
         with:
-          name: windows-x64-app
-          # 2026 Flutter path includes the 'x64' architecture folder
+          name: windows-x64-release
+          # This is the 2026 path: note the 'x64' folder
           path: my_app/build/windows/x64/runner/Release/
-          # No compression makes it faster to download to your phone
+          # OPTIMIZATION: compression-level 0 makes the upload 
+          # and your phone's download much faster.
           compression-level: 0
+          if-no-files-found: error

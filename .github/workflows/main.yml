@@ -1,87 +1,44 @@
-name: Flutter Multi-Platform Build
+name: Windows x64 Build Only
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to trigger this from your Android phone
 
 jobs:
-  android-build:
-    runs-on: ubuntu-latest
-    # This block tells GitHub to run everything inside your 'my_app' folder
+  build-windows-x64:
+    # Using the latest 2026 runner for maximum speed
+    runs-on: windows-2025-vs2026 
+    
     defaults:
       run:
         working-directory: my_app
+        
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
           channel: 'stable'
           cache: true
-
-      - run: flutter pub get
-      - run: flutter build apk --split-per-abi
-      
-      - name: Upload Android APKs
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apks
-          # Updated path to include my_app
-          path: my_app/build/app/outputs/flutter-apk/*.apk
-
-  web-build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: my_app
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
+          # Note: No '3.x.x', just use '3.x' or 'any' to get the 2026 version
           flutter-version: '3.x'
-          channel: 'stable'
-      - run: flutter pub get
-      - run: flutter build web --release
-      - name: Upload Web build
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows x64
+        # We explicitly target x64 to avoid confusion with ARM64
+        run: flutter build windows --release
+
+      - name: Upload Windows x64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
-          path: my_app/build/web/
-
-  windows-build:
-    runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: my_app
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x'
-          channel: 'stable'
-          cache: true
-
-      - run: flutter pub get
-      - run: flutter config --enable-windows-desktop
-      - run: flutter build windows --release
-
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          # THE FIX: Added 'x64' to the path. 
-          # Flutter 3.40+ puts files in my_app/build/windows/x64/runner/Release/
+          name: windows-x64-app
+          # 2026 Flutter path includes the 'x64' architecture folder
           path: my_app/build/windows/x64/runner/Release/
-          if-no-files-found: error # This will make the job fail if the path is still wrong
+          # No compression makes it faster to download to your phone
+          compression-level: 0

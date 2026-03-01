@@ -65,18 +65,23 @@ jobs:
         working-directory: my_app
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.x'
           channel: 'stable'
           cache: true
+
       - run: flutter pub get
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows --release
-      
+
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: my_app/build/windows/runner/Release/
+          # THE FIX: Added 'x64' to the path. 
+          # Flutter 3.40+ puts files in my_app/build/windows/x64/runner/Release/
+          path: my_app/build/windows/x64/runner/Release/
+          if-no-files-found: error # This will make the job fail if the path is still wrong

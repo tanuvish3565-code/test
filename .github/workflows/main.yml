@@ -15,7 +15,7 @@ jobs:
           flutter-version: 'stable'
       - run: flutter pub get
       - run: flutter build apk --split-per-abi
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: android-apks
           path: build/app/outputs/flutter-apk/*.apk
@@ -29,7 +29,7 @@ jobs:
           flutter-version: 'stable'
       - run: flutter pub get
       - run: flutter build web --release
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: web-build
           path: build/web/
@@ -44,7 +44,7 @@ jobs:
       - run: flutter pub get
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows --release
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: windows-build
           path: build/windows/runner/Release/

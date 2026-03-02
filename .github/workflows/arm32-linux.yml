@@ -1,4 +1,4 @@
-name: Build ARM32 Linux (The Final Strike)
+name: Build ARM32 Linux (Total Path Lockdown)
 
 on:
   push:
@@ -30,18 +30,22 @@ jobs:
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
+        env:
+          # We force these paths to ensure 3.11.0 is used everywhere
+          FLUTTER_ROOT: ${{ env.FLUTTER_HOME }}
+          DART_SDK: ${{ env.FLUTTER_HOME }}/bin/cache/dart-sdk
         run: |
           cd my_app
           
-          # 1. Hijack the Sony tool internal SDK first
-          rm -rf ../flutter-elinux/flutter
-          ln -s $FLUTTER_ROOT ../flutter-elinux/flutter
+          # 1. Force the Sony tool to use our specific SDK folder
+          # We point it to the actual path where flutter-action installs things
+          export ELINUX_FLUTTER_SDK=$FLUTTER_ROOT
           
-          # 2. Run create (tool now uses the correct SDK)
+          # 2. Run pub get using the ABSOLUTE path to the 3.11.0 dart
+          $FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart pub get
+          
+          # 3. Create project (ignore errors as we will force-build)
           flutter-elinux create . || true
           
-          # 3. Resolve dependencies with correct Dart
-          flutter pub get
-          
-          # 4. Build ARM32 Linux GUI
-          flutter-elinux build elinux --target-arch=arm32 --target-backend-type=x11 --release
+          # 4. Final Build - Using 'arm' and pointing to the correct SDK
+          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release --flutter-sdk=$FLUTTER_ROOT

@@ -12,23 +12,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: 'stable'
+          # DISABLE CACHE TO FORCE A FRESH DOWNLOAD
+          cache: false 
+
+      - name: Verify Fresh SDK
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip curl
-
-      - name: Download Specific Flutter 3.41.2
-        run: |
-          cd $HOME
-          curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.2-stable.tar.xz
-          tar xf flutter_linux_3.41.2-stable.tar.xz
-          echo "$HOME/flutter/bin" >> $GITHUB_PATH
-          echo "$HOME/flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
-
-      - name: Verify Fresh Version
-        run: |
-          # This should now show 3.41.2 and Dart 3.11+
-          flutter --version
+          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
 
       - name: Setup Sony Tool
         run: |

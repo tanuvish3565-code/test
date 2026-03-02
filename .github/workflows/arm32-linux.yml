@@ -17,28 +17,32 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip curl
 
-      - name: Setup Sony Tool and Force Upgrade
+      - name: Setup Sony Tool and Freeze Version
         run: |
           git clone https://github.com/sony/flutter-elinux.git
           cd flutter-elinux
           
-          # Initialize their internal flutter
+          # 1. Force initialize the internal flutter folder
           bin/flutter-elinux --version || true
           
-          # Now, FORCE the internal flutter folder to the version you need
+          # 2. Go inside and force the correct version
           cd flutter
           git fetch --all --tags
-          git checkout 90673a4eef2 # This is the exact hash for 3.41.2 from your logs
+          git checkout 90673a4eef2
           
+          # 3. SABOTAGE: Delete the .git folder so 'git reset' commands fail silently
+          rm -rf .git
+          
+          # 4. Add to path
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
         run: |
           cd my_app
-          # Use the tool's internal dart to ensure alignment
-          ../flutter-elinux/bin/flutter-elinux create .
-          ../flutter-elinux/bin/flutter-elinux pub get
-          ../flutter-elinux/bin/flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+          # Now it can't revert because there is no .git folder to talk to
+          flutter-elinux create .
+          flutter-elinux pub get
+          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

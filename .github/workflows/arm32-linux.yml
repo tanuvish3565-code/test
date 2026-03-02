@@ -1,4 +1,4 @@
-name: Build ARM32 Linux (Patched & Cached)
+name: Build ARM32 Linux (The Final Strike)
 
 on:
   push:
@@ -24,27 +24,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
 
-      - name: Setup & Patch Sony Tool
+      - name: Setup Sony Tool
         run: |
           git clone https://github.com/sony/flutter-elinux.git
-          # Fix: Use the correct path for the version pin
-          # We check for the file first, then overwrite it to prevent the downgrade
-          if [ -f "./flutter-elinux/internal/flutter.version" ]; then
-            echo "90673a4eef2" > ./flutter-elinux/internal/flutter.version
-          else
-            echo "90673a4eef2" > ./flutter-elinux/flutter.version
-          fi
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
         run: |
           cd my_app
+          
+          # 1. Standard pub get with good Dart
           flutter pub get
-          flutter-elinux create .
+          
+          # 2. Run create (this will download the bad 3.7.2 SDK)
+          flutter-elinux create . || true
+          
+          # 3. THE HIJACK: Delete the bad SDK the tool just downloaded 
+          # and replace it with our good one from the runner
+          rm -rf ../flutter-elinux/flutter
+          ln -s $FLUTTER_ROOT ../flutter-elinux/flutter
+          
+          # 4. Now run the build. Since the folder is now a link to 3.41.2, 
+          # it HAS to use Dart 3.11.
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm32-app
-          path: my_app/build/elinux/arm/release/bundle/

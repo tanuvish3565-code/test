@@ -19,12 +19,9 @@ jobs:
 
       - name: Manual Flutter Download
         run: |
-          # Download exactly what the error asked for
           curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.2-stable.tar.xz -o flutter.tar.xz
           tar xf flutter.tar.xz
-          # Move it to a safe place
           mv flutter $HOME/custom_flutter
-          # FORCE these into the PATH so 3.7.2 is ignored
           echo "$HOME/custom_flutter/bin" >> $GITHUB_PATH
           echo "$HOME/custom_flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
 
@@ -34,15 +31,19 @@ jobs:
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
+        env:
+          # This tells the Sony tool EXACTLY where our good Flutter is
+          ELINUX_FLUTTER_SDK: ${{ github.workspace }}/../custom_flutter
         run: |
-          # Check version one last time to be sure
-          flutter --version
-          
           cd my_app
-          flutter-elinux create .
-          # We use the full path to make sure it doesn't use the wrong dart
-          $HOME/custom_flutter/bin/flutter pub get
-          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+          # 1. First, run standard pub get with the good Dart
+          flutter pub get
+          
+          # 2. Run create but tell it where the SDK is
+          flutter-elinux create --flutter-sdk=$HOME/custom_flutter .
+          
+          # 3. Build using the specific SDK
+          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release --flutter-sdk=$HOME/custom_flutter
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

@@ -33,17 +33,15 @@ jobs:
         run: |
           cd my_app
           
-          # 1. Standard pub get with good Dart
-          flutter pub get
-          
-          # 2. Run create (this will download the bad 3.7.2 SDK)
-          flutter-elinux create . || true
-          
-          # 3. THE HIJACK: Delete the bad SDK the tool just downloaded 
-          # and replace it with our good one from the runner
+          # 1. Hijack the Sony tool internal SDK first
           rm -rf ../flutter-elinux/flutter
           ln -s $FLUTTER_ROOT ../flutter-elinux/flutter
           
-          # 4. Now run the build. Since the folder is now a link to 3.41.2, 
-          # it HAS to use Dart 3.11.
-          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+          # 2. Run create (tool now uses the correct SDK)
+          flutter-elinux create . || true
+          
+          # 3. Resolve dependencies with correct Dart
+          flutter pub get
+          
+          # 4. Build ARM32 Linux GUI
+          flutter-elinux build elinux --target-arch=arm32 --target-backend-type=x11 --release

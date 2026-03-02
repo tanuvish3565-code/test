@@ -12,23 +12,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.2'
-          channel: 'stable'
-          # DISABLE CACHE TO FORCE A FRESH DOWNLOAD
-          cache: false 
-
-      - name: Verify Fresh SDK
-        run: |
-          flutter --version
-          dart --version
-
-      - name: Install Dependencies
+      - name: Install System Deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
+          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip curl
+
+      - name: Manual Flutter Download
+        run: |
+          # Download exactly what the error asked for
+          curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.2-stable.tar.xz -o flutter.tar.xz
+          tar xf flutter.tar.xz
+          # Move it to a safe place
+          mv flutter $HOME/custom_flutter
+          # FORCE these into the PATH so 3.7.2 is ignored
+          echo "$HOME/custom_flutter/bin" >> $GITHUB_PATH
+          echo "$HOME/custom_flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
 
       - name: Setup Sony Tool
         run: |
@@ -37,9 +35,13 @@ jobs:
 
       - name: Build for ARM32
         run: |
+          # Check version one last time to be sure
+          flutter --version
+          
           cd my_app
           flutter-elinux create .
-          flutter-elinux pub get
+          # We use the full path to make sure it doesn't use the wrong dart
+          $HOME/custom_flutter/bin/flutter pub get
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
 
       - name: Upload Artifact

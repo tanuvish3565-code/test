@@ -1,4 +1,4 @@
-name: Build ARM32 Linux
+name: Build ARM32 Linux (Patched & Cached)
 
 on:
   push:
@@ -12,11 +12,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install System Deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip curl
-
+      # 1. Setup Flutter with Caching (Saved Info: To reduce future build time)
       - name: Setup Flutter 3.41.2
         uses: subosito/flutter-action@v2
         with:
@@ -24,26 +20,31 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Sony Tool (Matched Version)
+      - name: Install System Dependencies
         run: |
-          # We clone the tool and tell it NOT to download its own flutter
+          sudo apt-get update
+          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
+
+      # 2. Clone and Patch Sony Tool
+      - name: Setup & Patch Sony Tool
+        run: |
           git clone https://github.com/sony/flutter-elinux.git
+          # The ChatGPT Patch: Overwrite the internal pin to match our SDK
+          echo "90673a4eef2" > ./flutter-elinux/tools/flutter_version
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
+      # 3. Build the App
       - name: Build for ARM32
-        env:
-          # This variable tells the Sony tool to use the Flutter we already installed
-          ELINUX_FLUTTER_SDK: ${{ env.FLUTTER_HOME }}
         run: |
           cd my_app
-          # Verify we are on Dart 3.11
-          dart --version
+          # Standard pub get using the cached SDK
+          flutter pub get
           
-          # Force the tool to use our path for everything
+          # This should now respect the patched version
           flutter-elinux create .
-          flutter-elinux pub get
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
-          
+
+      # 4. Save the Result
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:

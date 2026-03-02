@@ -22,24 +22,21 @@ jobs:
           curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.2-stable.tar.xz -o flutter.tar.xz
           tar xf flutter.tar.xz
           mv flutter $HOME/custom_flutter
-          # Put our new SDK at the absolute START of the PATH
           echo "$HOME/custom_flutter/bin" >> $GITHUB_PATH
-          echo "$HOME/custom_flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
 
-      - name: Setup Sony Tool
+      - name: Setup Sony Tool with Symlink
         run: |
           git clone https://github.com/sony/flutter-elinux.git
-          # Add Sony tool to path
+          # THE FIX: Create a link so elinux uses our good Flutter
+          ln -s $HOME/custom_flutter $GITHUB_WORKSPACE/flutter-elinux/flutter
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
         env:
-          # This is the "Magic" variable that tells Flutter tools where the SDK is
           FLUTTER_ROOT: /home/runner/custom_flutter
-          DART_SDK: /home/runner/custom_flutter/bin/cache/dart-sdk
         run: |
           cd my_app
-          # Ensure we are using the 3.11.0 Dart
+          # Check to ensure we are still on 3.11
           dart --version
           
           flutter-elinux create .

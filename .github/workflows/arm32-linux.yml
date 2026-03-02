@@ -17,31 +17,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip curl
 
-      - name: Manual Flutter Download
-        run: |
-          curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.2-stable.tar.xz -o flutter.tar.xz
-          tar xf flutter.tar.xz
-          mv flutter $HOME/custom_flutter
-          echo "$HOME/custom_flutter/bin" >> $GITHUB_PATH
-
-      - name: Setup Sony Tool with Symlink
+      - name: Setup Sony Tool and Force Upgrade
         run: |
           git clone https://github.com/sony/flutter-elinux.git
-          # THE FIX: Create a link so elinux uses our good Flutter
-          ln -s $HOME/custom_flutter $GITHUB_WORKSPACE/flutter-elinux/flutter
+          cd flutter-elinux
+          
+          # Initialize their internal flutter
+          bin/flutter-elinux --version || true
+          
+          # Now, FORCE the internal flutter folder to the version you need
+          cd flutter
+          git fetch --all --tags
+          git checkout 90673a4eef2 # This is the exact hash for 3.41.2 from your logs
+          
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
-        env:
-          FLUTTER_ROOT: /home/runner/custom_flutter
         run: |
           cd my_app
-          # Check to ensure we are still on 3.11
-          dart --version
-          
-          flutter-elinux create .
-          flutter-elinux pub get
-          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+          # Use the tool's internal dart to ensure alignment
+          ../flutter-elinux/bin/flutter-elinux create .
+          ../flutter-elinux/bin/flutter-elinux pub get
+          ../flutter-elinux/bin/flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

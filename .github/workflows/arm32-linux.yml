@@ -5,18 +5,12 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-defaults:
-  run:
-    working-directory: my_app
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          path: '.'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -27,21 +21,22 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
-        working-directory: .
 
-      - name: Setup Sony eLinux Tool
+      - name: Setup Sony Tool
         run: |
-          git clone https://github.com/sony/flutter-embedded-linux.git
-          echo "$GITHUB_WORKSPACE/flutter-embedded-linux/bin" >> $GITHUB_PATH
-        working-directory: .
+          git clone https://github.com/sony/flutter-elinux.git
+          # This line makes the 'flutter-elinux' command available to the next steps
+          echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
         run: |
+          # Move into your app folder to run the build
+          cd my_app
           flutter-elinux create .
           flutter-elinux pub get
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
 
-      - name: Upload Build
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-arm32-app

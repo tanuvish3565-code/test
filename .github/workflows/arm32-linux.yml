@@ -15,6 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.2' 
           channel: 'stable'
 
       - name: Install Dependencies
@@ -25,12 +26,10 @@ jobs:
       - name: Setup Sony Tool
         run: |
           git clone https://github.com/sony/flutter-elinux.git
-          # This line makes the 'flutter-elinux' command available to the next steps
           echo "$GITHUB_WORKSPACE/flutter-elinux/bin" >> $GITHUB_PATH
 
       - name: Build for ARM32
         run: |
-          # Move into your app folder to run the build
           cd my_app
           flutter-elinux create .
           flutter-elinux pub get

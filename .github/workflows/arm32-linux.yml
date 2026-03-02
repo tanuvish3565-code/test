@@ -33,16 +33,18 @@ jobs:
         run: |
           cd my_app
           
-          # 1. Manually find the Flutter path to prevent empty variable errors
-          FLUTTER_PATH=$(which flutter | sed 's/\/bin\/flutter//')
+          # 1. Get the path to our 3.41.2 SDK
+          GOOD_FLUTTER=$(which flutter | sed 's/\/bin\/flutter//')
           
-          # 2. Hijack the Sony tool internal SDK
-          rm -rf ../flutter-elinux/flutter
-          ln -s $FLUTTER_PATH ../flutter-elinux/flutter
+          # 2. Set the official Sony environment variable to bypass their internal SDK
+          export ELINUX_FLUTTER_SDK=$GOOD_FLUTTER
           
           # 3. Use the absolute path to Dart 3.11.0 for pub get
-          $FLUTTER_PATH/bin/cache/dart-sdk/bin/dart pub get
+          $GOOD_FLUTTER/bin/cache/dart-sdk/bin/dart pub get
           
-          # 4. Create and Build using 'arm'
+          # 4. Create project
           flutter-elinux create . || true
-          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+          
+          # 5. Final Build - Using 'armel' (standard for ARM 32-bit Linux)
+          # We also pass the flutter-sdk flag directly to the build command
+          flutter-elinux build elinux --target-arch=armel --target-backend-type=x11 --release --flutter-sdk=$GOOD_FLUTTER

@@ -12,12 +12,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Clean Pre-installed Flutter
+        run: |
+          sudo rm -rf /opt/hostedtoolcache/flutter
+          sudo rm -rf /usr/bin/flutter
+          sudo rm -rf /usr/local/bin/flutter
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.2'
           channel: 'stable'
-          cache: true
 
       - name: Install Dependencies
         run: |
@@ -32,8 +37,6 @@ jobs:
       - name: Build for ARM32
         run: |
           cd my_app
-          # Force the use of the specific Flutter version we just installed
-          flutter pub get
           flutter-elinux create .
           flutter-elinux pub get
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release

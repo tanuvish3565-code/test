@@ -2,49 +2,47 @@ name: Build ARM32 Linux
 
 on:
   push:
-      branches: [ main ]
-        workflow_dispatch:
+    branches: [ main ]
+  workflow_dispatch:
 
-        # THIS IS THE IMPORTANT PART:
-        defaults:
-          run:
-              working-directory: my_app  # Change this to match your folder name exactly
+defaults:
+  run:
+    working-directory: my_app
 
-              jobs:
-                build:
-                    runs-on: ubuntu-latest
-                        steps:
-                              - name: Checkout Code
-                                      uses: actions/checkout@v4
-                                              with:
-                                                        path: '.' # Checks out the whole repo to the root
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          path: '.'
 
-                                                              - name: Setup Flutter
-                                                                      uses: subosito/flutter-action@v2
-                                                                              with:
-                                                                                        channel: 'stable'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
 
-                                                                                              - name: Install Dependencies
-                                                                                                      run: |
-                                                                                                                sudo apt-get update
-                                                                                                                          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
-                                                                                                                                  working-directory: . # Run this in the root to ensure sudo works correctly
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake pkg-config libwayland-dev libx11-dev libxkbcommon-dev libgles2-mesa-dev zip
+        working-directory: .
 
-                                                                                                                                        - name: Setup ARM32 Tool
-                                                                                                                                                run: |
-                                                                                                                                                          git clone https://github.com/sony/flutter-embedded-linux.git
-                                                                                                                                                                    echo "$GITHUB_WORKSPACE/flutter-embedded-linux/bin" >> $GITHUB_PATH
-                                                                                                                                                                            working-directory: .
+      - name: Setup Sony eLinux Tool
+        run: |
+          git clone https://github.com/sony/flutter-embedded-linux.git
+          echo "$GITHUB_WORKSPACE/flutter-embedded-linux/bin" >> $GITHUB_PATH
+        working-directory: .
 
-                                                                                                                                                                                  - name: Build for ARM32
-                                                                                                                                                                                          run: |
-                                                                                                                                                                                                    flutter-elinux create .
-                                                                                                                                                                                                              flutter-elinux pub get
-                                                                                                                                                                                                                        flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
+      - name: Build for ARM32
+        run: |
+          flutter-elinux create .
+          flutter-elinux pub get
+          flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
 
-                                                                                                                                                                                                                              - name: Upload Build
-                                                                                                                                                                                                                                      uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                                              with:
-                                                                                                                                                                                                                                                        name: linux-arm32-app
-                                                                                                                                                                                                                                                                  # Update this path to include your subfolder:
-                                                                                                                                                                                                                                                                            path: my_app/build/elinux/arm/release/bundle/
+      - name: Upload Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm32-app
+          path: my_app/build/elinux/arm/release/bundle/

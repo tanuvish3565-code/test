@@ -15,7 +15,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'master'
+          flutter-version: '3.41.2'
+          channel: 'stable'
           cache: true
 
       - name: Install Dependencies
@@ -31,6 +32,8 @@ jobs:
       - name: Build for ARM32
         run: |
           cd my_app
+          # Force the use of the specific Flutter version we just installed
+          flutter pub get
           flutter-elinux create .
           flutter-elinux pub get
           flutter-elinux build elinux --target-arch=arm --target-backend-type=x11 --release
